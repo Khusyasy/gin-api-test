@@ -24,11 +24,19 @@ func NewBookController(service services.BookService) BookController {
 func (c *controller) Save(ctx *gin.Context) {
 	var book entities.Book
 	ctx.BindJSON(&book)
-	c.service.Save(book)
-	ctx.JSON(200, book)
+	newBook, err := c.service.Save(book)
+	if err != nil {
+		ctx.JSON(500, err)
+		return
+	}
+	ctx.JSON(200, newBook)
 }
 
 func (c *controller) FindAll(ctx *gin.Context) {
-	var books []entities.Book = c.service.FindAll()
+	books, err := c.service.FindAll()
+	if err != nil {
+		ctx.JSON(500, err)
+		return
+	}
 	ctx.JSON(200, books)
 }

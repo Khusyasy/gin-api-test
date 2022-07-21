@@ -1,25 +1,60 @@
 package services
 
-import "github.com/Khusyasy/gin-api-test/entities"
+import (
+	"context"
+
+	"github.com/Khusyasy/gin-api-test/entities"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+)
 
 type BookService interface {
-	Save(entities.Book) entities.Book
-	FindAll() []entities.Book
+	Save(entities.Book) (entities.Book, error)
+	FindAll() ([]entities.Book, error)
 }
 
 type bookService struct {
-	books []entities.Book
+	coll *mongo.Collection
 }
 
-func NewBookService() BookService {
-	return &bookService{}
+func NewBookService(coll *mongo.Collection) BookService {
+	return &bookService{
+		coll: coll,
+	}
 }
 
-func (service *bookService) Save(book entities.Book) entities.Book {
-	service.books = append(service.books, book)
-	return book
+func (service *bookService) Save(book entities.Book) (entities.Book, error) {
+	book.ID = primitive.NewObjectID()
+
+	_, err := service.coll.InsertOne(context.TODO(), book)
+	if err != nil {
+		return entities.Book{}, err
+	}
+
+	return book, nil
 }
 
-func (service *bookService) FindAll() []entities.Book {
-	return service.books
+func (service *bookService) FindAll() ([]entities.Book, error) {
+	cur, err := service.coll.Find(context.TODO(), bson.M{})
+	if err != nil {
+		return nil, err
+	}
+
+	var books []entities.Book
+	for cur.Next(context.TODO()) {
+		var book entities.Book
+		err := cur.Decode(&book)
+		if err != nil {
+			return nil, err
+		}
+		books = append(books, book)
+	}
+
+	if err := cur.Err(); err != nil {
+		return nil, err
+	}
+
+	cur.Close(context.TODO())
+	return books, nil
 }
