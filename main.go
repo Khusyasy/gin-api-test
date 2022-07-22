@@ -46,7 +46,10 @@ func main() {
 
 	bookGroup := v1Group.Group("/books")
 	bookGroup.GET("/", bookController.FindAll)
+	bookGroup.GET("/:id", bookController.FindByID)
 	bookGroup.POST("/", bookController.Save)
+	bookGroup.PATCH("/:id", bookController.UpdateByID)
+	bookGroup.DELETE("/:id", bookController.DeleteByID)
 
 	server.Run(":8080")
 }

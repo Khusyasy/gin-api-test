@@ -12,6 +12,9 @@ import (
 type BookService interface {
 	Save(entities.Book) (entities.Book, error)
 	FindAll() ([]entities.Book, error)
+	FindByID(string) (entities.Book, error)
+	UpdateByID(string, entities.Book) (entities.Book, error)
+	DeleteByID(string) error
 }
 
 type bookService struct {
@@ -57,4 +60,48 @@ func (service *bookService) FindAll() ([]entities.Book, error) {
 
 	cur.Close(context.Background())
 	return books, nil
+}
+
+func (service *bookService) FindByID(id string) (entities.Book, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return entities.Book{}, err
+	}
+
+	var book entities.Book
+	err = service.coll.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&book)
+	if err != nil {
+		return entities.Book{}, err
+	}
+
+	return book, nil
+}
+
+func (service *bookService) UpdateByID(id string, book entities.Book) (entities.Book, error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return entities.Book{}, err
+	}
+
+	_, err = service.coll.UpdateOne(context.Background(), bson.M{"_id": oid}, bson.M{"$set": book})
+	if err != nil {
+		return entities.Book{}, err
+	}
+
+	book.ID = oid
+	return book, nil
+}
+
+func (service *bookService) DeleteByID(id string) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = service.coll.DeleteOne(context.Background(), bson.M{"_id": oid})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
