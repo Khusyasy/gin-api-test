@@ -42,8 +42,11 @@ func main() {
 
 	server := gin.Default()
 
-	server.GET("/books", bookController.FindAll)
-	server.POST("/books", bookController.Save)
+	v1Group := server.Group("/api/v1")
+
+	bookGroup := v1Group.Group("/books")
+	bookGroup.GET("/", bookController.FindAll)
+	bookGroup.POST("/", bookController.Save)
 
 	server.Run(":8080")
 }
