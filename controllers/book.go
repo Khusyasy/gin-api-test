@@ -52,7 +52,10 @@ func (c *controller) FindByID(ctx *gin.Context) {
 		ctx.JSON(500, err)
 		return
 	}
-
+	if book.ID.IsZero() {
+		ctx.JSON(404, gin.H{})
+		return
+	}
 	ctx.JSON(200, book)
 }
 
@@ -64,6 +67,10 @@ func (c *controller) UpdateByID(ctx *gin.Context) {
 	newBook, err := c.service.UpdateByID(id, book)
 	if err != nil {
 		ctx.JSON(500, err)
+		return
+	}
+	if newBook.ID.IsZero() {
+		ctx.JSON(404, gin.H{})
 		return
 	}
 	ctx.JSON(200, newBook)

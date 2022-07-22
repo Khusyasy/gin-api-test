@@ -65,12 +65,15 @@ func (service *bookService) FindAll() ([]entities.Book, error) {
 func (service *bookService) FindByID(id string) (entities.Book, error) {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return entities.Book{}, err
+		return entities.Book{}, nil
 	}
 
 	var book entities.Book
 	err = service.coll.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&book)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return entities.Book{}, nil
+		}
 		return entities.Book{}, err
 	}
 
@@ -80,12 +83,15 @@ func (service *bookService) FindByID(id string) (entities.Book, error) {
 func (service *bookService) UpdateByID(id string, book entities.Book) (entities.Book, error) {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return entities.Book{}, err
+		return entities.Book{}, nil
 	}
 
-	_, err = service.coll.UpdateOne(context.Background(), bson.M{"_id": oid}, bson.M{"$set": book})
+	res, err := service.coll.UpdateOne(context.Background(), bson.M{"_id": oid}, bson.M{"$set": book})
 	if err != nil {
 		return entities.Book{}, err
+	}
+	if res.MatchedCount == 0 {
+		return entities.Book{}, nil
 	}
 
 	book.ID = oid
@@ -95,7 +101,7 @@ func (service *bookService) UpdateByID(id string, book entities.Book) (entities.
 func (service *bookService) DeleteByID(id string) error {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return nil
 	}
 
 	_, err = service.coll.DeleteOne(context.Background(), bson.M{"_id": oid})
