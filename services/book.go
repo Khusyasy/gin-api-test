@@ -27,7 +27,7 @@ func NewBookService(coll *mongo.Collection) BookService {
 func (service *bookService) Save(book entities.Book) (entities.Book, error) {
 	book.ID = primitive.NewObjectID()
 
-	_, err := service.coll.InsertOne(context.TODO(), book)
+	_, err := service.coll.InsertOne(context.Background(), book)
 	if err != nil {
 		return entities.Book{}, err
 	}
@@ -36,13 +36,13 @@ func (service *bookService) Save(book entities.Book) (entities.Book, error) {
 }
 
 func (service *bookService) FindAll() ([]entities.Book, error) {
-	cur, err := service.coll.Find(context.TODO(), bson.M{})
+	cur, err := service.coll.Find(context.Background(), bson.M{})
 	if err != nil {
 		return nil, err
 	}
 
 	var books []entities.Book
-	for cur.Next(context.TODO()) {
+	for cur.Next(context.Background()) {
 		var book entities.Book
 		err := cur.Decode(&book)
 		if err != nil {
@@ -55,6 +55,6 @@ func (service *bookService) FindAll() ([]entities.Book, error) {
 		return nil, err
 	}
 
-	cur.Close(context.TODO())
+	cur.Close(context.Background())
 	return books, nil
 }
